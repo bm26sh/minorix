@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Minorix v0.13</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style id="css">
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-touch-callout:none}
+html,body{height:100%;margin:0;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:#eef1f7;color:#1d1d1f;-webkit-font-smoothing:antialiased}
+#app{height:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;position:relative}
+header{text-align:center;padding:8px 14px 0;flex-shrink:0;position:relative}
+header h1{font-size:14px;font-weight:600;margin:0;color:#6e6e73}
+#gear,#gearL{position:absolute;right:12px;top:6px;border:1px solid rgba(255,255,255,.7);border-radius:999px;background:rgba(255,255,255,.5);backdrop-filter:blur(14px);box-shadow:inset 0 1px 1px rgba(255,255,255,.9),0 3px 10px rgba(30,60,140,.12);font-size:12px;font-weight:600;color:#0071e3;padding:6px 12px;outline:none}
+#gearL{right:auto;left:12px}
+#gearL #dot2{left:auto;right:2px;top:2px;margin-left:0}
+#major{font-size:38px;font-weight:700;letter-spacing:-1.5px;margin:0;line-height:1.1}
+#rate{font-size:12px;color:#86868b;margin-top:1px}
+#views{flex:1;min-height:0;position:relative}
+.view{position:absolute;left:0;right:0;top:0;bottom:0;display:none}
+.view.on{display:block}
+#home.on{display:flex;flex-direction:column;align-items:center}
+#stage{position:relative;width:260px;height:260px;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:0}
+#orbit{position:absolute;left:50%;top:50%;width:240px;height:240px;margin:-120px 0 0 -120px;animation:spin 24s linear infinite;pointer-events:none}
+#orbit b{position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px}
+#btn{position:relative;width:148px;height:148px;border-radius:50%;border:1px solid rgba(255,255,255,.7);padding:0;background:rgba(255,255,255,.42);backdrop-filter:blur(22px) saturate(180%);box-shadow:inset 0 1px 1px rgba(255,255,255,.95),inset 0 -1px 2px rgba(255,255,255,.4),0 10px 30px rgba(30,60,140,.22);font-size:22px;font-weight:700;letter-spacing:-.3px;color:#0071e3;transition:transform .18s cubic-bezier(.3,1.6,.5,1);outline:none}
+#btn.down{transform:scale(1.07,.9)}
+.pop{position:absolute;font-weight:700;font-size:17px;color:#0071e3;pointer-events:none;animation:pop .8s ease-out forwards}
+#field{flex:1;min-height:0;overflow:hidden;width:100%;padding:2px 10px 84px;display:flex;flex-wrap:wrap;align-content:flex-start;justify-content:center}
+#field p{color:#a1a1a6;font-size:13px;margin:18px 0}
+.g{background:rgba(255,255,255,.5);backdrop-filter:blur(18px) saturate(170%);border:1px solid rgba(255,255,255,.65);box-shadow:inset 0 1px 1px rgba(255,255,255,.95),inset 0 -1px 2px rgba(255,255,255,.35),0 6px 20px rgba(40,70,140,.10);border-radius:20px;padding:6px 10px;margin:3px;display:flex;align-items:center}
+.g em{font-style:normal;font-size:12px;color:#6e6e73;margin-left:6px}
+.ic{display:block;margin-right:2px}
+.a0{animation:nudge .9s ease-in-out infinite alternate}
+.a1{transform-origin:20% 80%;animation:swing .7s ease-in-out infinite alternate}
+.a2{animation:spin 2.4s linear infinite}
+.a3{animation:bob .8s ease-in-out infinite alternate}
+.a4{animation:wobble 1.1s ease-in-out infinite alternate}
+.a5{animation:flick 1.2s steps(1) infinite}
+.a6{animation:pulse 1.4s ease-in-out infinite alternate}
+.noanim *{animation:none!important;transition:none!important}
+@keyframes island{0%{transform:scale(1)}40%{transform:scale(1.08,.93)}70%{transform:scale(.98,1.03)}100%{transform:scale(1)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pop{to{transform:translateY(-60px);opacity:0}}
+@keyframes nudge{to{transform:translateY(-5px)}}
+@keyframes swing{from{transform:rotate(-28deg)}to{transform:rotate(28deg)}}
+@keyframes bob{to{transform:translateY(-3px) scaleY(.94)}}
+@keyframes wobble{from{transform:rotate(-12deg)}to{transform:rotate(12deg)}}
+@keyframes flick{0%,100%{opacity:1}30%{opacity:.35}50%{opacity:1}70%{opacity:.6}}
+@keyframes pulse{from{transform:scale(.85,1)}to{transform:scale(1.2,.9)}}
+.panel{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 96px}
+.panel h2{font-size:20px;margin:0 0 8px;letter-spacing:-.3px}
+.card{background:rgba(255,255,255,.5);backdrop-filter:blur(18px) saturate(170%);border:1px solid rgba(255,255,255,.65);box-shadow:inset 0 1px 1px rgba(255,255,255,.95),inset 0 -1px 2px rgba(255,255,255,.35),0 6px 20px rgba(40,70,140,.10);border-radius:20px;padding:9px 12px;margin-bottom:8px;display:flex;align-items:center}
+.card.far{opacity:.5}
+.card .t{flex:1;min-width:0}
+.card b{display:block;font-size:15px}
+.card small{color:#86868b;font-size:12px}
+.card .n{font-size:22px;font-weight:700;color:#c7c7cc;margin-right:10px;min-width:28px;text-align:center}
+.card button{border:0;border-radius:980px;background:linear-gradient(#3b9bff,#0a6ee8);box-shadow:inset 0 1px 1px rgba(255,255,255,.6),0 2px 6px rgba(0,113,227,.35);color:#fff;font-size:14px;font-weight:600;padding:8px 12px;min-width:78px;outline:none}
+.card button:disabled{background:rgba(120,120,128,.28);box-shadow:none}
+.card button.red{background:linear-gradient(#ff6b60,#ff3b30)}
+.sw{width:46px;height:28px;border-radius:14px;background:#d2d2d7;position:relative;flex-shrink:0}
+.sw:after{content:"";position:absolute;left:2px;top:2px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}
+.sw.on{background:#34c759}
+.sw.on:after{transform:translateX(18px)}
+.ver{text-align:center;font-size:11px;color:#a1a1a6;padding:8px 0}
+nav{position:absolute;left:50%;bottom:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));width:286px;margin-left:-143px;height:58px;padding:5px;display:flex;border-radius:999px;background:rgba(255,255,255,.42);backdrop-filter:blur(22px) saturate(180%);border:1px solid rgba(255,255,255,.7);box-shadow:inset 0 1px 1px rgba(255,255,255,.95),inset 0 -1px 2px rgba(255,255,255,.4),0 10px 30px rgba(30,60,140,.22);transition:width .45s cubic-bezier(.3,1.4,.5,1),margin-left .45s cubic-bezier(.3,1.4,.5,1)}
+nav.two{width:194px;margin-left:-97px}
+nav.two #tabReb{display:none}
+nav.pulse{animation:island .45s ease-out}
+#ind{transform:translateX(92px);position:absolute;top:5px;bottom:5px;left:5px;width:92px;border-radius:999px;background:rgba(255,255,255,.75);box-shadow:inset 0 1px 1px #fff,0 3px 10px rgba(30,60,140,.18);transition:transform .4s cubic-bezier(.3,1.5,.5,1),opacity .2s}
+#ind.r{transform:translateX(0)}
+#ind.r2{transform:translateX(184px)}
+#ind.hide{opacity:0}
+nav button{flex:1;border:0;background:none;padding:0;font-size:12px;font-weight:600;color:#6e6e73;position:relative;z-index:1;outline:none;border-radius:999px}
+nav button.on{color:#0071e3}
+nav button span{display:block;font-size:17px;line-height:20px}
+#dot,#dot2{position:absolute;top:6px;left:50%;margin-left:12px;width:8px;height:8px;border-radius:50%;background:#ff3b30;display:none}
+body.dark{background:#0b0d12;color:#f5f5f7}
+.dark header h1,.dark #rate,.dark .card small,.dark .ver,.dark #field p,.dark nav button{color:#98989f}
+.dark .card,.dark .g{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.14);box-shadow:inset 0 1px 1px rgba(255,255,255,.18),0 6px 20px rgba(0,0,0,.4)}
+.dark nav,.dark #btn,.dark #gear,.dark #gearL{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.18);box-shadow:inset 0 1px 1px rgba(255,255,255,.22),0 10px 30px rgba(0,0,0,.5)}
+.dark #ind{background:rgba(255,255,255,.16);box-shadow:inset 0 1px 1px rgba(255,255,255,.25)}
+.dark nav button.on,.dark #btn,.dark #gear,.dark #gearL,.dark .pop{color:#4da3ff}
+.dark .card .n{color:#48484a}
+.dark .card button:disabled{background:rgba(120,120,128,.35);color:rgba(255,255,255,.6)}
+/* 설정: 리퀴드 글래스 토글과 버튼 */
+.sw{width:52px;height:30px;border-radius:999px;background:rgba(255,255,255,.35);backdrop-filter:blur(14px) saturate(170%);border:1px solid rgba(255,255,255,.7);box-shadow:inset 0 1px 2px rgba(0,0,0,.08),inset 0 1px 1px rgba(255,255,255,.9),0 2px 8px rgba(30,60,140,.1);transition:background .25s,border-color .25s}
+.sw:after{left:2px;top:2px;width:30px;height:24px;border-radius:999px;background:rgba(255,255,255,.88);box-shadow:inset 0 1px 1px #fff,0 2px 6px rgba(30,60,140,.3);transition:transform .3s cubic-bezier(.3,1.5,.5,1)}
+.sw.on{background:rgba(52,199,89,.5);border-color:rgba(255,255,255,.6)}
+.sw.on:after{transform:translateX(16px)}
+#set .card button{background:rgba(255,255,255,.4);backdrop-filter:blur(14px) saturate(170%);border:1px solid rgba(255,255,255,.7);box-shadow:inset 0 1px 1px rgba(255,255,255,.95),inset 0 -1px 2px rgba(255,255,255,.3),0 3px 10px rgba(30,60,140,.14);color:#0071e3}
+#set .card button.red{background:rgba(255,59,48,.14);color:#ff3b30}
+.dark .sw{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.2);box-shadow:inset 0 1px 2px rgba(0,0,0,.3),inset 0 1px 1px rgba(255,255,255,.15)}
+.dark .sw.on{background:rgba(48,209,88,.5)}
+.dark .sw:after{background:rgba(255,255,255,.85)}
+.dark #set .card button{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#4da3ff;box-shadow:inset 0 1px 1px rgba(255,255,255,.22),0 3px 10px rgba(0,0,0,.4)}
+.dark #set .card button.red{background:rgba(255,69,58,.2);color:#ff6961}
+/* 관리자 팝업 */
+#adm{position:absolute;left:0;right:0;top:0;bottom:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(20,30,60,.28);backdrop-filter:blur(6px)}
+#adm.on{display:flex}
+#adm .sheet{width:88%;max-width:360px;max-height:78%;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 10px;border-radius:28px;background:rgba(255,255,255,.55);backdrop-filter:blur(26px) saturate(180%);border:1px solid rgba(255,255,255,.75);box-shadow:inset 0 1px 1px rgba(255,255,255,.95),0 20px 50px rgba(20,40,100,.35)}
+#adm .hd{display:flex;align-items:center;justify-content:space-between}
+#adm .hd b{font-size:17px}
+#adm h4{margin:12px 0 6px;font-size:12px;color:#86868b;font-weight:600}
+#adm button{border:1px solid rgba(255,255,255,.7);border-radius:980px;background:rgba(255,255,255,.4);backdrop-filter:blur(14px) saturate(170%);box-shadow:inset 0 1px 1px rgba(255,255,255,.95),0 3px 10px rgba(30,60,140,.14);color:#0071e3;font-size:13px;font-weight:600;padding:8px 13px;margin:0 6px 6px 0;outline:none}
+#adm button.red{background:rgba(255,59,48,.14);color:#ff3b30}
+#adm .hd button{margin:0}
+.dark #adm .sheet{background:rgba(44,48,62,.62);border-color:rgba(255,255,255,.18)}
+.dark #adm button{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#4da3ff;box-shadow:inset 0 1px 1px rgba(255,255,255,.22)}
+.dark #adm button.red{background:rgba(255,69,58,.2);color:#ff6961}
+#ad{display:none;flex-shrink:0;min-height:50px;text-align:center;overflow:hidden}
+#ad.on{display:block}
+.rowb{display:flex;align-items:center;margin-top:8px}
+.inp{flex:1;min-width:0;border:1px solid rgba(255,255,255,.7);border-radius:14px;background:rgba(255,255,255,.5);padding:8px 11px;margin-right:8px;font-size:14px;color:inherit;outline:none;user-select:text;-webkit-user-select:text}
+.pin small{display:block;color:#86868b;font-size:12px;margin-top:10px}
+#pinMsg{color:#ff3b30}
+.dark .inp{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2)}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="ad"></div>
+  <header>
+    <h1>Minorix</h1>
+    <button id="gearL" type="button"><span id="lblL">강화</span><i id="dot2"></i></button>
+    <button id="gear" type="button">설정</button>
+    <div id="major">0</div>
+    <div id="rate"></div>
+  </header>
+  <div id="views">
+    <div id="home" class="view on">
+      <div id="stage"><div id="orbit"></div><button id="btn" type="button">minor</button></div>
+      <div id="field"></div>
+    </div>
+    <div id="shop" class="view panel"><h2>상점</h2><div id="list"></div></div>
+    <div id="up" class="view panel"><h2>강화</h2><div id="upBox"></div></div>
+    <div id="reb" class="view panel"><h2>환생</h2><div id="rebBox"></div></div>
+    <div id="set" class="view panel"><h2>설정</h2><div id="opts"></div><div class="ver" id="ver">Minorix v0.13 · 자동 저장됨</div></div>
+  </div>
+  <nav id="nav"><i id="ind"></i>
+    <button type="button" id="tabShop"><span>▦</span>상점<i id="dot"></i></button>
+    <button type="button" id="tabHome" class="on"><span>●</span>홈</button>
+    <button type="button" id="tabReb"><span>★</span>환생</button>
+  </nav>
+</div>
+
+<script>
+(function () {
+  // 구형 Safari(iPhone 4s)용: CSS에 -webkit- 접두사 버전을 자동으로 덧붙임
+  var st = document.getElementById('css'), orig = st.textContent;
+  var pre = orig.replace(/@keyframes/g, '@-webkit-keyframes')
+    .replace(/display:flex/g, 'display:-webkit-flex')
+    .replace(/(^|[{;\s])(backdrop-filter|flex-direction|flex-shrink|flex-wrap|flex|align-items|align-content|justify-content|transform-origin|transform|animation|transition|box-sizing|user-select)\s*:/g, '$1-webkit-$2:')
+    .replace(/transition:\s*transform/g, 'transition:-webkit-transform');
+  st.textContent = pre + orig;
+
+  var KEY = 'minorix.v0.1', GROWTH = 1.15;
+  var ICO = [
+    '<path d="M12 3l7 17-7-4-7 4z" fill="#0071e3"/>',
+    '<path d="M4 20L14 10" stroke="#8e5a2b" stroke-width="2.6" stroke-linecap="round"/><path d="M7 6c5-3 12 1 12 8" stroke="#6e6e73" stroke-width="2.6" fill="none" stroke-linecap="round"/>',
+    '<circle cx="12" cy="12" r="8" fill="none" stroke="#34c759" stroke-width="4" stroke-dasharray="3.1 3.1"/><circle cx="12" cy="12" r="6" fill="#34c759"/><circle cx="12" cy="12" r="2.4" fill="#fff"/>',
+    '<path d="M3 21V10l6 4v-4l6 4V5h4v16z" fill="#ff9500"/>',
+    '<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3" fill="none" stroke="#af52de" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16" r="2.2" fill="#af52de"/>',
+    '<path d="M13 2L4 14h7l-1 8 9-12h-7z" fill="#ffcc00"/>',
+    '<ellipse cx="12" cy="12" rx="6" ry="10" fill="none" stroke="#5856d6" stroke-width="3"/><ellipse cx="12" cy="12" rx="2.2" ry="5" fill="#5856d6" opacity=".5"/>'
+  ];
+  var ITEMS = [
+    { name: '커서',          base: 15,       rate: 0.1,    desc: '자동으로 눌러 줘요' },
+    { name: '마이너',        base: 100,      rate: 1,      desc: '메이저를 캐 와요' },
+    { name: '채굴기',        base: 1100,     rate: 8,      desc: '쉬지 않고 채굴해요' },
+    { name: '공장',          base: 12000,    rate: 47,     desc: '대량 생산 라인' },
+    { name: '연구소',        base: 130000,   rate: 260,    desc: '새로운 방법을 연구해요' },
+    { name: '발전소',        base: 1.4e6,    rate: 1400,   desc: '막대한 에너지를 만들어요' },
+    { name: '신전',          base: 20e6,     rate: 7800,   desc: '신성한 힘으로 만들어요' },
+    { name: '마법사 탑',     base: 330e6,    rate: 44000,  desc: '마법으로 불러내요' },
+    { name: '운송선',        base: 5.1e9,    rate: 260000, desc: '다른 행성에서 실어 와요' },
+    { name: '연금술 실험실', base: 75e9,     rate: 1.6e6,  desc: '금을 메이저로 바꿔요' },
+    { name: '포털',          base: 1e12,     rate: 10e6,   desc: '다른 차원에서 가져와요' },
+    { name: '타임머신',      base: 14e12,    rate: 65e6,   desc: '과거에서 가져와요' },
+    { name: '반물질 응축기', base: 170e12,   rate: 430e6,  desc: '반물질을 응축해요' },
+    { name: '프리즘',        base: 2.1e15,   rate: 2.9e9,  desc: '빛을 메이저로 바꿔요' },
+    { name: '확률 조작기',   base: 26e15,    rate: 21e9,   desc: '운을 만들어 내요' },
+    { name: '프랙탈 엔진',   base: 310e15,   rate: 150e9,  desc: '끝없이 복제돼요' },
+    { name: '콘솔',          base: 71e18,    rate: 1.1e12, desc: '코드로 메이저를 써요' },
+    { name: '무한 세계',     base: 12e21,    rate: 8.3e12, desc: '우주를 통째로 돌려요' },
+    { name: '코어 제빵기',   base: 1.9e24,   rate: 64e12,  desc: '생각만으로 구워요' },
+    { name: '당신',          base: 540e24,   rate: 510e12, desc: '당신 자신이 만들어요' }
+  ];
+
+  (function () { // 8번째 건물부터는 모양을 코드로 만들어 요(다각형)
+    var i, k, n, a, p;
+    for (i = 7; i < ITEMS.length; i++) {
+      n = 3 + (i % 5); p = '';
+      for (k = 0; k < n; k++) { a = 2 * Math.PI * k / n - Math.PI / 2; p += (12 + 9 * Math.cos(a)).toFixed(1) + ',' + (12 + 9 * Math.sin(a)).toFixed(1) + ' '; }
+      ICO.push('<polygon points="' + p + '" fill="hsl(' + (i * 37 % 360) + ',70%,55%)" stroke="rgba(0,0,0,.15)" stroke-width="1"/>');
+    }
+  })();
+  var TIERS = [[1, 10], [5, 50], [25, 500], [50, 50000], [100, 5000000]]; // [필요 보유 수, 가격 배수(기본가 기준)]
+  var s = { major: 0, owned: [], taps: 0, last: Date.now(), clickLv: 0, stars: 0, rebirths: 0, run: 0, reset: 0, rebOpen: 0, set: { anim: 1, pop: 1, full: 0, dark: 0, sfx: 1, adm: 0 } };
+  var ui = [], upItems = [], upUi = null, rebUi = null, tab = 'home', back = 'home';
+  var $ = function (id) { return document.getElementById(id); };
+  var elMajor = $('major'), elBtn = $('btn'), elStage = $('stage'), elOrbit = $('orbit'),
+      elRate = $('rate'), elList = $('list'), elDot = $('dot'), elDot2 = $('dot2'), elField = $('field');
+
+  function svg(i, px) { return '<svg class="ic a' + (i % 7) + '" viewBox="0 0 24 24" width="' + px + '" height="' + px + '">' + ICO[i] + '</svg>'; }
+  // 클릭 강화: 레벨이 오를수록 탭당 메이저가 늘어남 (1, 2, 3, 4, 6, 8, 12 ...)
+  function mult() { return 1 + 0.01 * s.stars; }
+  // 환생 레벨 = floor((평생 누적 / 1조)의 세제곱근). 얻는 ★ = 새 레벨 - 현재 레벨
+  function lvOf(x) { return Math.floor(Math.pow(x / 1e12, 1 / 3) + 1e-9); }
+  function gain() { return Math.max(0, lvOf(s.reset + s.run) - lvOf(s.reset)); }
+  function power(lv) { return Math.ceil(Math.pow(1.5, lv === undefined ? s.clickLv : lv)); }
+  function upCost() { return Math.floor(250 * Math.pow(3, s.clickLv)); }
+  function buyUp() { var c = upCost(); if (s.major >= c) { s.major -= c; s.clickLv++; sfxBuy(); render(); save(); } }
+  function blank() { var a = [], i; for (i = 0; i < ITEMS.length; i++) a.push(0); return a; }
+  function cost(i) { return Math.ceil(ITEMS[i].base * Math.pow(GROWTH, s.owned[i])); }
+  function perSec() { var t = 0, i; for (i = 0; i < ITEMS.length; i++) t += s.owned[i] * ITEMS[i].rate * Math.pow(2, s.iu[i]); return t * mult(); }
+  function tr(el, v) { el.style.webkitTransform = v; el.style.transform = v; }
+  function desync() {
+    var els = document.querySelectorAll('.ic'), k;
+    for (k = 0; k < els.length; k++) {
+      var d = '-' + ((k * 0.37) % 1).toFixed(2) + 's';
+      els[k].style.webkitAnimationDelay = d; els[k].style.animationDelay = d;
+    }
+  }
+
+  var actx = null;
+  function tone(f, d, type, v, to, delay) {
+    if (!s.set.sfx) return;
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!actx) actx = new AC();
+      if (actx.state === 'suspended' && actx.resume) actx.resume();
+      var t0 = actx.currentTime + (delay || 0), o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || 'sine';
+      o.frequency.setValueAtTime(f, t0);
+      if (to) o.frequency.exponentialRampToValueAtTime(to, t0 + d);
+      g.gain.setValueAtTime(v || 0.08, t0);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + d);
+      o.connect(g); g.connect(actx.destination);
+      o.start(t0); o.stop(t0 + d + 0.02);
+    } catch (e) {}
+  }
+  function sfxTap() { tone(480 + Math.random() * 120, 0.07, 'sine', 0.07, 260); }
+  function sfxBuy() { tone(660, 0.09, 'triangle', 0.08); tone(990, 0.13, 'triangle', 0.08, 0, 0.07); }
+  function sfxTick() { tone(900, 0.04, 'sine', 0.04); }
+  function sfxReb() { var n = [523, 659, 784, 1047], k; for (k = 0; k < 4; k++) tone(n[k], 0.28, 'sine', 0.09, 0, k * 0.1); }
+
+  function load() {
+    s.owned = blank(); s.iu = blank();
+    try { if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) s.set.dark = 1; } catch (e) {}
+    try {
+      var raw = window.localStorage.getItem(KEY);
+      if (raw) {
+        var d = JSON.parse(raw), i;
+        s.major = +d.major || 0; s.taps = +d.taps || 0; s.clickLv = +d.clickLv || 0; s.stars = +d.stars || 0; if (d.iu) { for (i = 0; i < ITEMS.length; i++) s.iu[i] = +d.iu[i] || 0; } s.rebirths = +d.rebirths || 0; s.run = d.run !== undefined ? +d.run || 0 : s.major; s.reset = d.reset !== undefined ? +d.reset || 0 : 1e12 * Math.pow(s.stars, 3); s.rebOpen = d.rebOpen ? 1 : 0; if (s.stars > 0 || s.rebirths > 0 || s.reset > 0) s.rebOpen = 1;
+        if (d.owned && d.owned.length) { for (i = 0; i < ITEMS.length; i++) s.owned[i] = +d.owned[i] || 0; }
+        else s.owned[0] = +d.cursors || 0;
+        if (d.set) { s.set.anim = d.set.anim ? 1 : 0; s.set.pop = d.set.pop ? 1 : 0; s.set.full = d.set.full ? 1 : 0; if (d.set.dark !== undefined) s.set.dark = d.set.dark ? 1 : 0; if (d.set.sfx !== undefined) s.set.sfx = d.set.sfx ? 1 : 0; s.set.adm = d.set.adm ? 1 : 0; }
+        var away = Math.min((Date.now() - (+d.last || Date.now())) / 1000, 28800);
+        if (away > 5) { var ag = away * perSec(); s.major += ag; s.run += ag; }
+      }
+    } catch (e) {}
+  }
+  function save() { try { s.last = Date.now(); window.localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {} }
+
+  function fmtM(n) { return n < 1000 ? (n < 0.05 ? '0' : n.toFixed(1)) : fmt(n); }
+  function fmt(n) {
+    var u = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'], i = 0;
+    if (s.set.full && n >= 10) return Math.floor(n).toLocaleString();
+    if (n < 1000) return n < 10 ? String(parseFloat(n.toFixed(2))) : String(Math.floor(n));
+    while (n >= 1000 && i < u.length - 1) { n /= 1000; i++; }
+    return n.toFixed(n < 10 ? 2 : n < 100 ? 1 : 0) + u[i];
+  }
+
+  // 홈: 커서는 버튼 둘레를 돌고, 나머지 아이템은 각자 아이콘과 동작으로 표시
+  function renderScene() {
+    var list = [], i, j, k, n, a, b, any = false, types = 0, cap;
+    for (i = 0; i < ITEMS.length; i++) if (s.owned[i]) { any = true; types++; }
+    cap = Math.max(1, Math.min(6, Math.floor(30 / Math.max(1, types))));
+    for (i = 0; i < ITEMS.length; i++) {
+      for (j = 0; j < Math.min(s.owned[i], cap); j++) list.push(i);
+    }
+    elOrbit.innerHTML = '';
+    n = list.length;
+    for (k = 0; k < n; k++) {
+      i = list[k]; a = k / n * 360;
+      b = document.createElement('b');
+      b.innerHTML = svg(i, 16);
+      tr(b, 'rotate(' + a + 'deg) translateY(-112px)' + (i === 0 ? ' rotate(180deg)' : ''));
+      elOrbit.appendChild(b);
+    }
+    elField.innerHTML = any ? '' : '<p>상점에서 아이템을 사 보세요</p>';
+    desync();
+  }
+
+  function buildList() {
+    var i, c;
+    for (i = 0; i < ITEMS.length; i++) {
+      c = document.createElement('div'); c.className = 'card';
+      c.innerHTML = '<div class="n">0</div><div class="t"><b></b><small></small></div><button type="button"></button>';
+      elList.appendChild(c);
+      ui.push({ card: c, n: c.childNodes[0], b: c.getElementsByTagName('b')[0], sm: c.getElementsByTagName('small')[0], btn: c.getElementsByTagName('button')[0] });
+      (function (k) { ui[k].btn.addEventListener('click', function () { buy(k); }, false); })(i);
+    }
+  }
+  function buy(i) {
+    var c = cost(i);
+    if (s.major >= c) { s.major -= c; s.owned[i]++; sfxBuy(); renderScene(); render(); save(); }
+  }
+
+  function buildSettings() {
+    var rows = [['다크 모드', 'dark'], ['효과음', 'sfx'], ['애니메이션', 'anim'], ['탭 숫자 효과', 'pop'], ['숫자 전체 표시', 'full']], box = $('opts'), i, c;
+    for (i = 0; i < rows.length; i++) {
+      c = document.createElement('div'); c.className = 'card';
+      c.innerHTML = '<div class="t"><b>' + rows[i][0] + '</b></div><div class="sw' + (s.set[rows[i][1]] ? ' on' : '') + '"></div>';
+      box.appendChild(c);
+      (function (key, sw) {
+        c.addEventListener('click', function () {
+          s.set[key] = s.set[key] ? 0 : 1;
+          sw.className = 'sw' + (s.set[key] ? ' on' : '');
+          applySettings(); save(); render();
+        }, false);
+      })(rows[i][1], c.childNodes[1]);
+    }
+    c = document.createElement('div'); c.className = 'card';
+    c.innerHTML = '<div class="t"><b>초기화</b><small>★ 포함 모든 진행 상황이 지워져요</small></div><button type="button" class="red">초기화</button>';
+    var rb = c.getElementsByTagName('button')[0], armed = 0, tmr;
+    rb.addEventListener('click', function () {
+      if (!armed) { armed = 1; rb.innerHTML = '정말?'; tmr = setTimeout(function () { armed = 0; rb.innerHTML = '초기화'; }, 3000); return; }
+      clearTimeout(tmr); armed = 0; rb.innerHTML = '초기화';
+      s = { major: 0, owned: blank(), taps: 0, last: Date.now(), clickLv: 0, iu: blank(), stars: 0, rebirths: 0, run: 0, reset: 0, rebOpen: 0, set: s.set }; if (back === 'reb') back = 'home'; navMode();
+      save(); renderScene(); render();
+    }, false);
+    box.appendChild(c);
+  }
+  function buyIu(i) {
+    var q = s.iu[i], c;
+    if (q >= TIERS.length) return;
+    c = ITEMS[i].base * TIERS[q][1];
+    if (s.owned[i] >= TIERS[q][0] && s.major >= c) { s.major -= c; s.iu[i]++; sfxBuy(); render(); save(); }
+  }
+  function buildUp() {
+    var box = $('upBox'), i, c;
+    c = document.createElement('div'); c.className = 'card';
+    c.innerHTML = '<div class="n"><svg class="ic a6" viewBox="0 0 24 24" width="26" height="26"><circle cx="12" cy="12" r="5" fill="#ff2d55"/><circle cx="12" cy="12" r="9" fill="none" stroke="#ff2d55" stroke-width="2" opacity=".5"/></svg></div><div class="t"><b></b><small></small></div><button type="button"></button>';
+    box.appendChild(c);
+    upUi = { b: c.getElementsByTagName('b')[0], sm: c.getElementsByTagName('small')[0], btn: c.getElementsByTagName('button')[0] };
+    upUi.btn.addEventListener('click', buyUp, false);
+    for (i = 0; i < ITEMS.length; i++) {
+      c = document.createElement('div'); c.className = 'card';
+      c.innerHTML = '<div class="n">' + svg(i, 26) + '</div><div class="t"><b></b><small></small></div><button type="button"></button>';
+      box.appendChild(c);
+      upItems.push({ card: c, b: c.getElementsByTagName('b')[0], sm: c.getElementsByTagName('small')[0], btn: c.getElementsByTagName('button')[0] });
+      (function (k) { upItems[k].btn.addEventListener('click', function () { buyIu(k); }, false); })(i);
+    }
+  }
+  function buildReb() {
+    var box = $('rebBox'), c1 = document.createElement('div'), c2 = document.createElement('div'), armed = 0, tmr;
+    c1.className = 'card';
+    c1.innerHTML = '<div class="n" style="color:#ff9f0a">★</div><div class="t"><b></b><small></small></div>';
+    c2.className = 'card';
+    c2.innerHTML = '<div class="t"><b></b><small></small></div><button type="button">환생</button>';
+    box.appendChild(c1); box.appendChild(c2);
+    rebUi = { b1: c1.getElementsByTagName('b')[0], s1: c1.getElementsByTagName('small')[0], b2: c2.getElementsByTagName('b')[0], s2: c2.getElementsByTagName('small')[0], btn: c2.getElementsByTagName('button')[0] };
+    rebUi.btn.addEventListener('click', function () {
+      var g = gain(); if (g < 1) return;
+      if (!armed) { armed = 1; rebUi.btn.innerHTML = '정말?'; tmr = setTimeout(function () { armed = 0; rebUi.btn.innerHTML = '환생'; }, 3000); return; }
+      clearTimeout(tmr); armed = 0; rebUi.btn.innerHTML = '환생';
+      sfxReb(); s.stars += g; s.rebirths++; s.major = 0; s.owned = blank(); s.iu = blank(); s.clickLv = 0; s.reset += s.run; s.run = 0;
+      save(); renderScene(); render();
+    }, false);
+  }
+  // 광고: AdSense 승인 후 아래 두 값을 채우면 화면 맨 위에 배너가 나타나요. 비워 두면 아무것도 안 보여요.
+  var ADS = { client: '', slot: '' };   // 예: client: 'ca-pub-1234567890123456', slot: '1234567890'
+  function initAds() {
+    var box = $('ad'), sc;
+    if (!ADS.client || !ADS.slot) return;
+    sc = document.createElement('script');
+    sc.async = true; sc.setAttribute('crossorigin', 'anonymous');
+    sc.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + ADS.client;
+    document.head.appendChild(sc);
+    box.innerHTML = '<ins class="adsbygoogle" style="display:block;width:100%;height:50px" data-ad-client="' + ADS.client + '" data-ad-slot="' + ADS.slot + '"></ins>';
+    box.className = 'on';
+    try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
+  }
+  function addM(n) { s.major += n; s.run += n; sfxBuy(); render(); save(); }
+  // 관리자 패널: 팝업. 기능을 추가하려면 GROUPS 배열에 [이름, 동작] 항목만 넣으면 됨
+  function buildAdmin() {
+    var app = $('app'), box = $('opts'), c = document.createElement('div'), m = document.createElement('div'),
+        grid, groups, i, j, h, btn, vc = 0, vt;
+    var ADMIN_PIN = '125489', admOk = false, pinBox, pinIn, pinMsg;
+    function refresh() { pinBox.style.display = admOk ? 'none' : ''; grid.style.display = admOk ? '' : 'none'; }
+    function open() { sfxTick(); refresh(); m.className = 'on'; }
+    function close() { m.className = ''; }
+
+    c.className = 'card'; c.style.display = s.set.adm ? '' : 'none';
+    c.innerHTML = '<div class="t"><b>관리자 패널</b></div><button type="button">열기</button>';
+    c.getElementsByTagName('button')[0].addEventListener('click', open, false);
+    box.appendChild(c);
+
+    m.id = 'adm';
+    m.innerHTML = '<div class="sheet panel"><div class="hd"><b>관리자 패널</b><button type="button" class="x">닫기</button></div><div class="pin"><small>비밀번호를 입력해 주세요</small><div class="rowb"><input class="inp" id="pinIn" type="password" inputmode="numeric" maxlength="12" placeholder="비밀번호"><button type="button">확인</button></div><small id="pinMsg"></small></div><div class="grid"></div></div>';
+    app.appendChild(m);
+    m.addEventListener('click', function (e) { if (e.target === m) close(); }, false);
+    m.getElementsByTagName('button')[0].addEventListener('click', close, false);
+    grid = m.querySelector('.grid'); pinBox = m.querySelector('.pin'); pinIn = $('pinIn'); pinMsg = $('pinMsg');
+    m.querySelector('.pin button').addEventListener('click', function () {
+      if (pinIn.value === ADMIN_PIN) { admOk = true; pinIn.value = ''; pinMsg.innerHTML = ''; sfxBuy(); refresh(); }
+      else { pinMsg.innerHTML = '비밀번호가 달라요'; pinIn.value = ''; }
+    }, false);
+
+    groups = [
+      ['메이저', [
+        ['+1K', function () { addM(1e3); }], ['+1M', function () { addM(1e6); }],
+        ['+1B', function () { addM(1e9); }], ['+1T', function () { addM(1e12); }], ['+1Qa', function () { addM(1e15); }]]],
+      ['시간 건너뛰기', [
+        ['1분 ▶', function () { addM(perSec() * 60); }], ['1시간 ▶', function () { addM(perSec() * 3600); }],
+        ['1일 ▶', function () { addM(perSec() * 86400); }]]],
+      ['아이템과 환생', [
+        ['아이템 +10', function () { var k; for (k = 0; k < ITEMS.length; k++) s.owned[k] += 10; sfxBuy(); renderScene(); render(); save(); }],
+        ['★ +10', function () { s.stars += 10; sfxBuy(); render(); save(); }]]],
+      ['관리', [
+        ['관리자 끄기', function () { s.set.adm = 0; admOk = false; c.style.display = 'none'; close(); save(); }, 'red']]]
+    ];
+    for (i = 0; i < groups.length; i++) {
+      h = document.createElement('h4'); h.innerHTML = groups[i][0]; grid.appendChild(h);
+      for (j = 0; j < groups[i][1].length; j++) {
+        btn = document.createElement('button'); btn.type = 'button';
+        btn.innerHTML = groups[i][1][j][0];
+        if (groups[i][1][j][2]) btn.className = groups[i][1][j][2];
+        btn.addEventListener('click', groups[i][1][j][1], false);
+        grid.appendChild(btn);
+      }
+    }
+    // 버전 글자를 5번 연속으로 누르면 잠금 해제
+    $('ver').addEventListener('click', function () {
+      vc++; clearTimeout(vt); vt = setTimeout(function () { vc = 0; }, 1500);
+      if (vc >= 5) { vc = 0; s.set.adm = 1; c.style.display = ''; save(); open(); }
+    }, false);
+  }
+  function applySettings() { document.body.className = (s.set.anim ? '' : 'noanim') + (s.set.dark ? ' dark' : ''); }
+
+  function render() {
+    var i, it, u, c, can = false;
+    checkReb();
+    elMajor.innerHTML = fmtM(s.major);
+    elRate.innerHTML = '초당 ' + fmt(perSec()) + ' · 탭당 ' + fmt(power()) + (s.stars ? ' · ★' + s.stars : '');
+    var can2 = s.major >= upCost(), k, q, w;
+    for (k = 0; k < ITEMS.length; k++) {
+      q = s.iu[k];
+      if (q < TIERS.length && s.owned[k] >= TIERS[q][0] && s.major >= ITEMS[k].base * TIERS[q][1]) can2 = true;
+    }
+    elDot2.style.display = (can2 && tab !== 'up') ? 'block' : 'none';
+    if (tab === 'up' && upUi) {
+      upUi.b.innerHTML = '클릭 강화 <span style="color:#86868b;font-weight:400">Lv.' + s.clickLv + '</span>';
+      upUi.sm.innerHTML = '탭당 +' + fmt(power()) + ' → +' + fmt(power(s.clickLv + 1));
+      upUi.btn.innerHTML = fmt(upCost());
+      upUi.btn.disabled = s.major < upCost();
+      for (k = 0; k < ITEMS.length; k++) {
+        q = s.iu[k]; w = upItems[k];
+        if (q >= TIERS.length) {
+          w.b.innerHTML = ITEMS[k].name + ' 강화 <span style="color:#34c759">MAX</span>';
+          w.sm.innerHTML = '생산 ×' + Math.pow(2, q);
+          w.btn.innerHTML = '완료'; w.btn.disabled = true; w.card.className = 'card';
+        } else {
+          w.b.innerHTML = ITEMS[k].name + ' 강화 <span style="color:#86868b;font-weight:400">Lv.' + q + '</span>';
+          w.sm.innerHTML = s.owned[k] < TIERS[q][0] ? ITEMS[k].name + ' ' + TIERS[q][0] + '개 필요 (현재 ' + s.owned[k] + ')' : '생산 ×2 → 총 ×' + Math.pow(2, q + 1);
+          w.btn.innerHTML = fmt(ITEMS[k].base * TIERS[q][1]);
+          w.btn.disabled = s.owned[k] < TIERS[q][0] || s.major < ITEMS[k].base * TIERS[q][1];
+          w.card.className = 'card' + (s.owned[k] < TIERS[q][0] ? ' far' : '');
+        }
+      }
+    }
+    for (i = 0; i < ITEMS.length; i++) {
+      it = ITEMS[i]; c = cost(i);
+      if (s.major >= c) can = true;
+      if (tab !== 'shop') continue;
+      u = ui[i];
+      u.card.className = 'card' + (s.owned[i] === 0 && s.major < it.base / 2 ? ' far' : '');
+      u.n.innerHTML = svg(i, 26) + '<span style="display:none"></span>';
+      u.b.innerHTML = it.name + ' <span style="color:#86868b;font-weight:400">×' + s.owned[i] + '</span>';
+      u.sm.innerHTML = it.desc + ' · 초당 +' + fmt(it.rate * mult() * Math.pow(2, s.iu[i]));
+      u.btn.innerHTML = fmt(c);
+      u.btn.disabled = s.major < c;
+    }
+    if (tab === 'reb' && rebUi) {
+      var gn = gain();
+      rebUi.b1.innerHTML = '★ ' + s.stars + ' <span style="color:#86868b;font-weight:400">생산 +' + s.stars + '%</span>';
+      rebUi.s1.innerHTML = '환생 ' + s.rebirths + '회 · 총 누적 ' + fmt(s.reset + s.run);
+      rebUi.b2.innerHTML = '환생하면 ★ +' + gn;
+      rebUi.s2.innerHTML = '다음 ★까지 총 누적 ' + fmt(1e12 * Math.pow(lvOf(s.reset + s.run) + 1, 3)) + ' · 모든 아이템과 강화가 초기화돼요';
+      rebUi.btn.disabled = gn < 1;
+    }
+    elDot.style.display = (can && tab !== 'shop') ? 'block' : 'none';
+  }
+
+  function navMode() { $('nav').className = s.rebOpen ? '' : 'two'; }
+  // 환생할 수 있는 만큼 모이면(또는 이미 환생한 적이 있으면) 환생 탭이 열려요
+  function checkReb() {
+    if (s.rebOpen) return;
+    if (gain() >= 1 || s.stars > 0 || s.rebirths > 0 || s.reset > 0) {
+      s.rebOpen = 1; save(); sfxReb();
+      var nv = $('nav'); nv.className = ''; void nv.offsetWidth; nv.className = 'pulse';
+    }
+  }
+  function posClass(n) { return n === 'shop' ? 'r' : (n === 'reb' ? 'r2' : ''); }
+  function show(name) {
+    sfxTick();
+    var k, names = ['home', 'shop', 'up', 'reb', 'set'], head = name === 'set' || name === 'up';
+    if (!head) back = name;
+    tab = name;
+    for (k = 0; k < 5; k++) $(names[k]).className = 'view' + (names[k] !== 'home' ? ' panel' : '') + (names[k] === name ? ' on' : '');
+    $('tabShop').className = name === 'shop' ? 'on' : '';
+    $('tabHome').className = name === 'home' ? 'on' : '';
+    $('tabReb').className = name === 'reb' ? 'on' : '';
+    $('ind').className = posClass(back) + (head ? ' hide' : '');
+    var nv = $('nav'); nv.className = s.rebOpen ? '' : 'two'; void nv.offsetWidth; nv.className += ' pulse';
+    $('gear').innerHTML = name === 'set' ? '닫기' : '설정';
+    $('lblL').innerHTML = name === 'up' ? '닫기' : '강화';
+    render(); if (name === 'shop' || name === 'up') desync();
+  }
+  $('tabHome').addEventListener('click', function () { show('home'); }, false);
+  $('tabShop').addEventListener('click', function () { show('shop'); }, false);
+  $('tabReb').addEventListener('click', function () { show('reb'); }, false);
+  $('gearL').addEventListener('click', function () { show(tab === 'up' ? back : 'up'); }, false);
+  $('gear').addEventListener('click', function () { show(tab === 'set' ? back : 'set'); }, false);
+
+  function pop(x, y) {
+    if (!s.set.pop) return;
+    var p = document.createElement('div');
+    p.className = 'pop'; p.innerHTML = '+' + fmt(power());
+    p.style.left = (x - 10) + 'px'; p.style.top = (y - 20) + 'px';
+    elStage.appendChild(p);
+    setTimeout(function () { if (p.parentNode) p.parentNode.removeChild(p); }, 800);
+  }
+  function tap(e) {
+    var t = (e.touches && e.touches[0]) || e, r = elStage.getBoundingClientRect();
+    sfxTap(); var pw = power(); s.major += pw; s.run += pw; s.taps++;
+    pop(t.clientX - r.left, t.clientY - r.top); render();
+  }
+  var touched = false;
+  elBtn.addEventListener('touchstart', function (e) { e.preventDefault(); touched = true; elBtn.className = 'down'; tap(e); }, false);
+  elBtn.addEventListener('touchend', function () { elBtn.className = ''; }, false);
+  elBtn.addEventListener('mousedown', function (e) { if (touched) return; elBtn.className = 'down'; tap(e); }, false);
+  window.addEventListener('mouseup', function () { elBtn.className = ''; }, false);
+
+  var prev = Date.now();
+  setInterval(function () { var now = Date.now(), dt = (now - prev) / 1000; prev = now; var g = perSec() * dt; s.major += g; s.run += g; render(); }, 100);
+  setInterval(save, 5000);
+  window.addEventListener('pagehide', save, false);
+  document.addEventListener('touchmove', function (e) {
+    var el = e.target;
+    while (el && el !== document.body) { if (el.className && /panel/.test(el.className)) return; el = el.parentNode; }
+    e.preventDefault();
+  }, false);
+
+  load(); applySettings(); buildList(); buildUp(); buildSettings(); buildAdmin(); buildReb(); initAds(); navMode(); renderScene(); render();
+})();
+</script>
+</body>
+</html>
